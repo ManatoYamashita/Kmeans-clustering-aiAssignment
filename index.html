@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <title>AI and Detamining Special Assignment</title>
+</head>
+<style lang="css">
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    header {
+        color: #101010;
+        padding: 2rem;
+    }
+    header h1 {
+        margin: 0;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    header p {
+        margin: 0;
+        padding: 0;
+    }
+    #result {
+        padding: 0 2rem;
+    }
+    #task {
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    #task ol li {
+        margin: 0;
+        padding: 0;
+        margin-bottom: 20px;
+    }
+    #task ol li p {
+        margin: 0;
+        padding: 0;
+    }
+    strong {
+        color: darkred;
+    }
+    div {
+        margin: 0 auto;
+        width: 80%;
+        padding: 2rem;
+    }
+    div p {
+        margin: 0;
+        padding: 0;
+    }
+    body > div.liner-scroll-points-container {
+        display: none;
+    }
+</style>
+<body>
+    <header>    
+        <h1>人工知能とデータマイニング 任意課題</h1>
+        <p>g2172117: 山下マナト</p>
+    </header>
+    <main id="task">
+        <h2>前提</h2>
+        <ol>
+            <li>太陽光発電システムデータ202308.xlsx</li>
+            <p>2号館屋上に設置されている太陽光発電システムの2023年8月に関するデータ．各列の説明を以下に記す．<br>
+                A: データ番号<br>
+                B: 年月日<br>
+                C: 曜日<br>
+                D: 時刻（この行のデータはこの時刻から1時間のデータ）<br>
+                E～H: 太陽光発電システムで測定された実発電量，日射量，気温，消費電力量<br>
+                I～L: E～Hのデータを上限値が1になるように変換したデータ<br>
+                M～P: E～Hのデータを下限値が0，上限値が1になるように変換したデータ<br>
+                Q: 特記すべきイベント<br>
+            </p>
+            <li>data1.csv</li>
+            <p>1のファイルの列E～Hのデータ</p>
+            <li>data2.csv</li>
+            <p>1のファイルの列I～Lのデータ</p>
+            <li>data3.csv</li>
+            <p>1のファイルの列M～Pのデータ</p>
+        </ol>
+
+        <h2>課題</h2>
+        <p>18時間×31日分の実発電量，日射量，気温，消費電力量をクラスタリングするプログラムを作成し，実行した結果をもとに考察せよ．</p>
+            <ul>
+                <li>クラスタリングの手法はk-means法またはK-medoid法を用いること.（今回は<strong>k-means法</strong>を使用する）</li>
+                <li>プログラミング言語は問わない（今回は<strong>Javascript</strong>で記述する）</li>
+                <li>Kの値は問わない（今回は<strong>k=2</strong>とする）</li>
+            </ul>
+    </main>
+    <hr>
+    <h2 id="result">結果</h2>
+
+<script>
+    // 1~3のcsvファイルを読み込んで、2次元配列に変換する関数
+    function csvToArray(csv) {
+    let rows = csv.split("\n");
+    let array = [];
+    for (let i = 0; i < rows.length; i++) {
+        let cols = rows[i].split(",");
+        let row = [];
+        for (let j = 0; j < cols.length; j++) {
+        row.push(parseFloat(cols[j]));
+        }
+        array.push(row);
+    }
+    return array;
+    }
+
+    // データからランダムにk個の点を選んで、初期の重心として返す関数
+    function initCentroids(data, k) {
+    let centroids = [];
+    let n = data.length;
+    let used = new Set();
+    for (let i = 0; i < k; i++) {
+        let index = Math.floor(Math.random() * n);
+        while (used.has(index)) {
+        index = Math.floor(Math.random() * n);
+        }
+        used.add(index);
+        centroids.push(data[index]);
+    }
+    return centroids;
+    }
+
+    // データの各点に対して、最も近い重心のインデックスを返す関数
+    function findClosestCentroids(data, centroids) {
+    let idx = [];
+    for (let i = 0; i < data.length; i++) {
+        let minDist = Infinity;
+        let minIndex = -1;
+        for (let j = 0; j < centroids.length; j++) {
+        let dist = 0;
+        for (let k = 0; k < data[i].length; k++) {
+            dist += (data[i][k] - centroids[j][k]) ** 2;
+        }
+        dist = Math.sqrt(dist);
+        if (dist < minDist) {
+            minDist = dist;
+            minIndex = j;
+        }
+        }
+        idx.push(minIndex);
+    }
+    return idx;
+    }
+
+    // 各クラスタに属するデータの平均値を計算して、新しい重心として返す関数
+    function computeCentroids(data, idx, k) {
+    let centroids = [];
+    for (let i = 0; i < k; i++) {
+        let sum = new Array(data[0].length).fill(0);
+        let count = 0;
+        for (let j = 0; j < data.length; j++) {
+        if (idx[j] === i) {
+            for (let k = 0; k < data[j].length; k++) {
+            sum[k] += data[j][k];
+            }
+            count++;
+        }
+        }
+        let centroid = [];
+        for (let j = 0; j < sum.length; j++) {
+        centroid.push(sum[j] / count);
+        }
+        centroids.push(centroid);
+    }
+    return centroids;
+    }
+
+    // k-means法のメインの関数で、データをk個のクラスタに分けて、重心とクラスタのインデックスを返す関数
+    function kmeans(data, k, max_iter) {
+    let centroids = initCentroids(data, k);
+    let idx = [];
+    for (let i = 0; i < max_iter; i++) {
+        idx = findClosestCentroids(data, centroids);
+        centroids = computeCentroids(data, idx, k);
+    }
+    return [centroids, idx];
+    }
+
+    // csvファイルを読み込んで、テキストを表示する関数
+    function showText(csv, title, labels) {
+    let data = csvToArray(csv);
+    let k = 2;
+    let max_iter = 10;
+    let [centroids, idx] = kmeans(data, k, max_iter);
+    let text = "";
+    text += title + "\n";
+    text += "重心:\n";
+    for (let i = 0; i < k; i++) {
+        text += "Cluster " + (i + 1) + ": " + centroids[i].join(", ") + "\n";
+    }
+    text += "クラスタ:（省略）\n";
+
+    // クラスタの表示は省略します。
+    //   for (let i = 0; i < data.length; i++) {
+    //     text += labels[i] + ": Cluster " + (idx[i] + 1) + "\n";
+    //   }
+    let div = document.createElement("div");
+    div.textContent = text;
+    document.body.appendChild(div);
+    }
+
+    // データの種類の配列
+    let types = ["実発電量", "日射量", "気温", "消費電力量"];
+
+    // 日付と時刻のラベルを作成する関数
+    function createLabels() {
+    let labels = [];
+    let date = new Date(2023, 7, 1, 0, 0, 0); // 2023年8月1日0時0分0秒
+    let hour = 1000 * 60 * 60; // 1時間のミリ秒
+    for (let i = 0; i < 18 * 31; i++) {
+        labels.push(date.toISOString());
+        date = new Date(date.getTime() + hour);
+    }
+    return labels;
+    }
+
+    // 日付と時刻のラベルを作成
+    let labels = createLabels();
+
+    // 1~3のcsvファイルを読み込む
+    let xhr1 = new XMLHttpRequest();
+    let xhr2 = new XMLHttpRequest();
+    let xhr3 = new XMLHttpRequest();
+    xhr1.open("GET", "./reports/data1.csv", true);
+    xhr2.open("GET", "./reports/data2.csv", true);
+    xhr3.open("GET", "./reports/data3.csv", true);
+    xhr1.onload = function () {
+    if (xhr1.status === 200) {
+        let csv1 = xhr1.responseText;
+        xhr2.onload = function () {
+        if (xhr2.status === 200) {
+            let csv2 = xhr2.responseText;
+            xhr3.onload = function () {
+            if (xhr3.status === 200) {
+                let csv3 = xhr3.responseText;
+                // テキストを表示
+                for (let i = 0; i < types.length; i++) {
+                showText(csv1, types[i] + "1", labels);
+                showText(csv2, types[i] + "2", labels);
+                showText(csv3, types[i] + "3", labels);
+                }
+            }
+            };
+            xhr3.send();
+        }
+        };
+        xhr2.send();
+    }
+    };
+    xhr1.send();
+
+</script>
+</body>
+</html>
