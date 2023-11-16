@@ -46,20 +46,23 @@ Q: 特記すべきイベント
 ## 内容
 
 * レポート
-* プログラムソース（Javascript）
+* [プログラムソース（Javascript in html）](https://github.com/ManatoYamashita/Kmeans-clustering-aiAssignment)
 
 ### 想定しているディレクトリ構造
 
 .
-├── README.md
-├── README.pdf（レポート）
-├── index.html（プログラムファイル javascript in html）
-└── reports（配布されたデータ）
-    ├── data1.csv
-    ├── data2.csv
-    ├── data3.csv
-    ├── sample.c
-    └── 太陽光発電システムデータ202308.xlsx
+├── README.md（readme）
+├── report.pdf（レポート）
+├── index.html（プログラムファイルjavascript in html）
+├── reports（配布されたデータ）
+│   ├── data1.csv
+│   ├── data2.csv
+│   ├── data3.csv
+│   ├── sample.c
+│   └── 太陽光発電システムデータ202308.xlsx
+└── tree.png（想定するディレクトリ構造の画像pdf表示の補完）
+
+![directory-tree](./tree.png)
 
 （リポジトリには.htmlと.pdfと.mdファイルのみ）
 
