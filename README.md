@@ -50,17 +50,18 @@ Q: 特記すべきイベント
 
 ### 想定しているディレクトリ構造
 
-    .
-    ├── README.md
-    ├── index.html
-    └── reports
-        ├── data1.csv
-        ├── data2.csv
-        ├── data3.csv
-        ├── sample.c
-        └── 太陽光発電システムデータ202308.xlsx
+.
+├── README.md
+├── README.pdf（レポート）
+├── index.html（プログラムファイル javascript in html）
+└── reports（配布されたデータ）
+    ├── data1.csv
+    ├── data2.csv
+    ├── data3.csv
+    ├── sample.c
+    └── 太陽光発電システムデータ202308.xlsx
 
-    （リポジトリには.htmlと.mdファイルのみ）
+（リポジトリには.htmlと.pdfと.mdファイルのみ）
 
 ## 太陽光発電と消費電力に関するレポート
 
